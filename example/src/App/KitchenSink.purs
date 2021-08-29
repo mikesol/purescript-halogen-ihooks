@@ -2,7 +2,7 @@ module App.KitchenSink where
 
 import Prelude
 
-import Control.Applicative.Indexed (ipure, ivoid)
+import Control.Applicative.Indexed (ipure)
 import Control.Monad.Indexed.Qualified as Ix
 import Effect.Aff (Aff)
 import Effect.Class.Console as Log
@@ -46,12 +46,14 @@ component =
     when (bar `mod` 3 == 0) (Hooks.lift (Log.info $ "Bar at " <> show bar <> " is mod 3!"))
     -- adds an emitter that increments foo even if we don't!
     -- should respond to both the passage of time and clicks
-    ivoid $ Hooks.hookCons (Proxy :: _ "emitter") do
+    Hooks.hookCons (Proxy :: _ "emitter") do
       { emitter, listener } <- H.liftEffect HS.create
-      H.subscribe emitter >>= Sugar.addToFinalize <<< unsubscribe
-      H.liftEffect
-        $ subscribe (interval 1000)
-          (const $ HS.notify listener (Sugar.modify_ (Proxy :: _ "foo") (add 1)))
+      Sugar.addToFinalize <<< unsubscribe =<< H.subscribe emitter
+      Sugar.addToFinalize <<< H.liftEffect =<<
+        ( H.liftEffect
+            $ subscribe (interval 1000)
+              (const $ HS.notify listener (Sugar.modify_ (Proxy :: _ "foo") (add 1)))
+        )
     -- html
     ipure
       ( HH.div [ classes [ "w-screen", "h-screen" ] ]
@@ -78,4 +80,3 @@ component =
               ]
           ]
       )
-
