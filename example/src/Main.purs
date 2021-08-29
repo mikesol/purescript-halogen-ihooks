@@ -4,6 +4,7 @@ import Prelude
 
 import App.Button as Button
 import App.Compat as Compat
+import App.KitchenSink as KitchenSink
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -17,6 +18,7 @@ stories :: Stories Aff
 stories = Object.fromFoldable
   [ Tuple "" $ proxy Button.component
   , Tuple "button" $ proxy Button.component
+  , Tuple "kitchen sink" $ proxy KitchenSink.component
   , Tuple "compat" $ proxy Compat.component
   ]
 

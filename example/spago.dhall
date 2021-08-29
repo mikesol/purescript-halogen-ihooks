@@ -6,7 +6,9 @@ in      conf
               conf.dependencies
             # [ "aff"
               , "console"
+              , "event"
               , "halogen-storybook"
+              , "halogen-subscriptions"
               , "foreign-object"
               ]
         }

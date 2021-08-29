@@ -4,13 +4,6 @@ Welcome to your new Dhall package-set!
 Below are instructions for how to edit this file for most use
 cases, so that you don't need to know Dhall to use it.
 
-## Warning: Don't Move This Top-Level Comment!
-
-Due to how `dhall format` currently works, this comment's
-instructions cannot appear near corresponding sections below
-because `dhall format` will delete the comment. However,
-it will not delete a top-level comment like this one.
-
 ## Use Cases
 
 Most will want to do one or both of these options:
@@ -49,6 +42,7 @@ in  upstream
   with halogen.repo = "https://example.com/path/to/git/repo.git"
 
   with halogen-vdom.version = "v4.0.0"
+  with halogen-vdom.dependencies = [ "extra-dependency" ] # halogen-vdom.dependencies
 -------------------------------
 
 ### Additions
@@ -105,66 +99,13 @@ in  upstream
 -------------------------------
 -}
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.14.0-20210311/packages.dhall sha256:3da8be2b7b4a0e7de6186591167b363023695accffb98a8639e9e7d06e2070d6
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.4-20210826/packages.dhall sha256:eee0765aa98e0da8fc414768870ad588e7cada060f9f7c23c37385c169f74d9f
+
 
 let overrides = {=}
 
 let additions =
-      { wags =
-        { dependencies =
-          [ "aff"
-          , "aff-promise"
-          , "arraybuffer-types"
-          , "behaviors"
-          , "control"
-          , "convertable-options"
-          , "datetime"
-          , "effect"
-          , "either"
-          , "event"
-          , "foldable-traversable"
-          , "foreign"
-          , "foreign-object"
-          , "free"
-          , "heterogeneous"
-          , "indexed-monad"
-          , "integers"
-          , "js-timers"
-          , "lists"
-          , "math"
-          , "maybe"
-          , "newtype"
-          , "nullable"
-          , "ordered-collections"
-          , "prelude"
-          , "psci-support"
-          , "record"
-          , "refs"
-          , "safe-coerce"
-          , "sized-vectors"
-          , "tuples"
-          , "typelevel"
-          , "typelevel-peano"
-          , "unsafe-coerce"
-          , "web-events"
-          ]
-        , repo = "https://github.com/mikesol/purescript-wags.git"
-        , version = "v0.3.15"
-        }
-      , typelevel-peano =
-        { dependencies =
-          [ "arrays"
-          , "console"
-          , "effect"
-          , "prelude"
-          , "psci-support"
-          , "typelevel-prelude"
-          , "unsafe-coerce"
-          ]
-        , repo = "https://github.com/csicar/purescript-typelevel-peano.git"
-        , version = "v1.0.1"
-        }
-      , event =
+      {  event =
         { dependencies =
           [ "console"
           , "effect"
@@ -176,27 +117,6 @@ let additions =
           ]
         , repo = "https://github.com/mikesol/purescript-event.git"
         , version = "v1.4.1"
-        }
-      , behaviors =
-        { dependencies =
-          [ "psci-support"
-          , "effect"
-          , "ordered-collections"
-          , "filterable"
-          , "nullable"
-          , "event"
-          , "web-html"
-          , "web-events"
-          , "web-uievents"
-          ]
-        , repo = "https://github.com/mikesol/purescript-behaviors.git"
-        , version = "v8.1.0"
-        }
-      , convertable-options =
-        { dependencies = [ "console", "effect", "maybe", "record" ]
-        , repo =
-            "https://github.com/natefaubion/purescript-convertable-options.git"
-        , version = "v1.0.0"
         }
       }
 

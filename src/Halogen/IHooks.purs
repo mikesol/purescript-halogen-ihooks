@@ -228,32 +228,35 @@ component options f =
 newtype IndexedHookM (hooks :: Row Type) (input :: Type) (slots :: Row Type) (output :: Type) (m :: Type -> Type) (i :: Row Type) (o :: Row Type) a
   = IndexedHookM (HookM hooks input slots output m a)
 
-derive instance indexedHookFFunctor :: Functor (IndexedHookM hooks input slots output m i i)
+derive instance indexedHookMFunctor :: Functor (IndexedHookM hooks input slots output m i i)
 
-instance indexedHookFApply :: Apply (IndexedHookM hooks input slots output m i i) where
+derive newtype instance indexedHookMSemigroup :: Semigroup a => Semigroup (IndexedHookM hooks input slots output m i i a)
+derive newtype instance indexedHookMMonoid :: Monoid a => Monoid (IndexedHookM hooks input slots output m i i a)
+
+instance indexedHookMApply :: Apply (IndexedHookM hooks input slots output m i i) where
   apply = iapply
 
-instance indexedHookFBind :: Bind (IndexedHookM hooks input slots output m i i) where
+instance indexedHookMBind :: Bind (IndexedHookM hooks input slots output m i i) where
   bind = ibind
 
-instance indexedHookFApplicative :: Applicative (IndexedHookM hooks input slots output m i i) where
+instance indexedHookMApplicative :: Applicative (IndexedHookM hooks input slots output m i i) where
   pure = ipure
 
-instance indexedHookFMonad :: Monad (IndexedHookM hooks input slots output m i i)
+instance indexedHookMMonad :: Monad (IndexedHookM hooks input slots output m i i)
 
-instance indexedHookFIxFunctor :: IxFunctor (IndexedHookM hooks input slots output m) where
+instance indexedHookMIxFunctor :: IxFunctor (IndexedHookM hooks input slots output m) where
   imap f (IndexedHookM a) = IndexedHookM (map f a)
 
-instance indexedHookFIxApply :: IxApply (IndexedHookM hooks input slots output m) where
+instance indexedHookMIxApply :: IxApply (IndexedHookM hooks input slots output m) where
   iapply = iap
 
-instance indexedHookFIxApplicative :: IxApplicative (IndexedHookM hooks input slots output m) where
+instance indexedHookMIxApplicative :: IxApplicative (IndexedHookM hooks input slots output m) where
   ipure = IndexedHookM <<< pure
 
-instance indexedHookFIxBind :: IxBind (IndexedHookM hooks input slots output m) where
+instance indexedHookMIxBind :: IxBind (IndexedHookM hooks input slots output m) where
   ibind (IndexedHookM fmonad) function = IndexedHookM (fmonad >>= \f -> let IndexedHookM o = function f in o)
 
-instance indexedHookFIxMonad :: IxMonad (IndexedHookM hooks input slots output m)
+instance indexedHookMIxMonad :: IxMonad (IndexedHookM hooks input slots output m)
 
 data HookAction hooks input slots output m
   = Initialize
