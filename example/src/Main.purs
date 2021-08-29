@@ -15,7 +15,8 @@ import Halogen.Storybook (Stories, runStorybook, proxy)
 
 stories :: Stories Aff
 stories = Object.fromFoldable
-  [ Tuple "button" $ proxy Button.component
+  [ Tuple "" $ proxy Button.component
+  , Tuple "button" $ proxy Button.component
   , Tuple "compat" $ proxy Compat.component
   ]
 
