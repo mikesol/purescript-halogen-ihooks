@@ -19,4 +19,4 @@ The library is comprised of three modules:
 
 ## Example
 
-Check out [the example](./example).
+Check out [the example](./example) code, and play with it live on [purescript-halogen-ihooks.surge.sh](https://purescript-halogen-ihooks.surge.sh/).
