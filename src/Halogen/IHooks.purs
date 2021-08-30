@@ -127,10 +127,7 @@ setHookMUnion
   => Union r1 r2 hooks
   => { | r1 }
   -> HookM hooks input slots output m Unit
-setHookMUnion r =
-  ( H.modify_ \i ->
-      i { hooks = setHookUnion r i.hooks }
-  )
+setHookMUnion = H.modify_ <<< over (prop p_.hooks) <<< setHookUnion
 
 asHooks :: forall r. { | r } -> Hooks r
 asHooks = unsafeCoerce
