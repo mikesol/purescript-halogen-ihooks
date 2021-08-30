@@ -19,6 +19,7 @@ to generate this file without the comments in this block.
   , "maybe"
   , "newtype"
   , "prelude"
+  , "profunctor-lenses"
   , "psci-support"
   , "refs"
   , "tuples"

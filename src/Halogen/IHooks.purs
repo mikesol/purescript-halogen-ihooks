@@ -31,6 +31,8 @@ import Control.Apply.Indexed (class IxApply)
 import Control.Bind.Indexed (class IxBind, ibind)
 import Control.Monad.Indexed (class IxMonad, iap)
 import Data.Functor.Indexed (class IxFunctor)
+import Data.Lens (over, set)
+import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Data.Symbol (class IsSymbol, reflectSymbol)
@@ -40,6 +42,7 @@ import Halogen.HTML.Core as HC
 import Prim.Row (class Cons, class Lacks, class Union)
 import Prim.RowList as RL
 import Prim.TypeError (class Fail, Text)
+import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 type HookM hooks input slots output m a
@@ -53,6 +56,9 @@ type HookM hooks input slots output m a
   output
   m
   a
+
+p_ :: { hooks :: Proxy "hooks", input :: Proxy "input", html :: Proxy "html" }
+p_ = { hooks: Proxy, input: Proxy, html: Proxy }
 
 newtype ReadOnly a
   = ReadOnly a
@@ -106,10 +112,7 @@ setHookMCons
   => proxy sym
   -> a
   -> HookM hooks input slots output m Unit
-setHookMCons px a =
-  ( H.modify_ \i ->
-      i { hooks = setHookCons px a i.hooks }
-  )
+setHookMCons px = H.modify_ <<< over (prop p_.hooks) <<< setHookCons px
 
 class NotReadOnlyRL (rl :: RL.RowList Type)
 
@@ -174,20 +177,14 @@ handleHookAction
        m
        Unit
 handleHookAction { finalize } f = case _ of
-  Initialize -> do
-    { input } <- H.get
-    html <- let IndexedHookM m = f input in m
-    H.modify_ _ { html = html }
-  DoThis m -> do
-    m
-    { input } <- H.get
-    html <- let IndexedHookM m = f input in m
-    H.modify_ _ { html = html }
-  Receive i -> do
-    { input } <- H.modify _ { input = i }
-    html <- let IndexedHookM m = f input in m
-    H.modify_ _ { html = html }
+  Initialize -> render Nothing
+  DoThis m -> m *> render Nothing
+  Receive i -> render (Just i)
   Finalize -> finalize
+  where
+  render = maybe H.get (H.modify <<< set (prop p_.input))
+    >=> unIx <<< f <<< _.input
+    >=> H.modify_ <<< set (prop p_.html)
 
 type Options query hooks input slots output m
   =
@@ -202,7 +199,7 @@ defaultOptions
    . Options query hooks input slots output m
 defaultOptions =
   { receiveInput: false
-  , handleQuery: \_ -> pure Nothing
+  , handleQuery: const (pure Nothing)
   , finalize: pure unit
   , initialHTML: HH.div [] []
   }
@@ -214,21 +211,23 @@ component
   -> H.Component query input output m
 component options f =
   H.mkComponent
-    { initialState: \input -> { input, hooks: unsafeCoerce {}, html: options.initialHTML }
-    , render: \{ html } -> html
+    { initialState: { input: _, hooks: unsafeCoerce {}, html: options.initialHTML }
+    , render: _.html
     , eval:
         H.mkEval
           { initialize: Just Initialize
           , finalize: Just Finalize
           , receive: if options.receiveInput then Just <<< Receive else const Nothing
           , handleAction: handleHookAction options f
-          , handleQuery:
-              \q -> let res = options.handleQuery q in res
+          , handleQuery: options.handleQuery
           }
     }
 
 newtype IndexedHookM (hooks :: Row Type) (input :: Type) (slots :: Row Type) (output :: Type) (m :: Type -> Type) (i :: Row Type) (o :: Row Type) a
   = IndexedHookM (HookM hooks input slots output m a)
+
+unIx :: forall hooks input slots output m i o a. IndexedHookM hooks input slots output m i o a -> HookM hooks input slots output m a
+unIx (IndexedHookM m) = m
 
 derive instance indexedHookMFunctor :: Functor (IndexedHookM hooks input slots output m i i)
 
@@ -283,4 +282,3 @@ hookCons
   -> HookM hooks input slots output m v
   -> IndexedHookM hooks input slots output m i o v
 hookCons px m = IndexedHookM (map (getHookCons px) getHooksM >>= maybe (m >>= (applySecond <$> setHookMCons px <*> pure)) pure)
-    
