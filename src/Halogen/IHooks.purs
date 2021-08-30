@@ -24,12 +24,14 @@ module Halogen.IHooks
   ) where
 
 import Prelude
+
 import Control.Applicative.Indexed (class IxApplicative, iapply, ipure)
+import Control.Apply (applySecond)
 import Control.Apply.Indexed (class IxApply)
 import Control.Bind.Indexed (class IxBind, ibind)
 import Control.Monad.Indexed (class IxMonad, iap)
 import Data.Functor.Indexed (class IxFunctor)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Halogen as H
@@ -280,10 +282,5 @@ hookCons
   => proxy sym
   -> HookM hooks input slots output m v
   -> IndexedHookM hooks input slots output m i o v
-hookCons px m = IndexedHookM go
-  where
-  go =
-    map (getHookCons px) getHooksM
-      >>= case _ of
-        Nothing -> (m >>= setHookMCons px) *> go
-        Just v -> pure v
+hookCons px m = IndexedHookM (map (getHookCons px) getHooksM >>= maybe (m >>= (applySecond <$> setHookMCons px <*> pure)) pure)
+    
