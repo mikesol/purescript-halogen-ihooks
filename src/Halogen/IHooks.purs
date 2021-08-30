@@ -243,7 +243,7 @@ instance indexedHookMApplicative :: Applicative (IndexedHookM hooks input slots 
 instance indexedHookMMonad :: Monad (IndexedHookM hooks input slots output m i i)
 
 instance indexedHookMIxFunctor :: IxFunctor (IndexedHookM hooks input slots output m) where
-  imap f (IndexedHookM a) = IndexedHookM (map f a)
+  imap f = IndexedHookM <<< map f <<< unIx
 
 instance indexedHookMIxApply :: IxApply (IndexedHookM hooks input slots output m) where
   iapply = iap
@@ -252,7 +252,7 @@ instance indexedHookMIxApplicative :: IxApplicative (IndexedHookM hooks input sl
   ipure = IndexedHookM <<< pure
 
 instance indexedHookMIxBind :: IxBind (IndexedHookM hooks input slots output m) where
-  ibind (IndexedHookM fmonad) function = IndexedHookM (fmonad >>= \f -> let IndexedHookM o = function f in o)
+  ibind (IndexedHookM fmonad) = IndexedHookM <<< bind fmonad <<< compose unIx
 
 instance indexedHookMIxMonad :: IxMonad (IndexedHookM hooks input slots output m)
 
