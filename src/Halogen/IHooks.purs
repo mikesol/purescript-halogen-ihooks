@@ -7,7 +7,6 @@ module Halogen.IHooks
   , HookAction
   , HookM
   , HookArg
-  , doThis
   , asHooks
   , setHookMCons
   , setHookMUnion
@@ -45,12 +44,16 @@ import Prim.TypeError (class Fail, Text)
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
-type HookM hooks input slots output m a
-  = H.HalogenM
-  { hooks :: (Hooks hooks)
+type HookState hooks input slots output m
+  =
+  { hooks :: Hooks hooks
   , input :: input
   , html :: HookHTML hooks input slots output m
   }
+
+type HookM hooks input slots output m a
+  = H.HalogenM
+  (HookState hooks input slots output m)
   (HookAction hooks input slots output m)
   slots
   output
@@ -150,36 +153,18 @@ type HookArg hooks input slots output m
   input
   -> IndexedHookM hooks input slots output m () hooks (HookHTML hooks input slots output m)
 
-doThis
-  :: forall hooks input slots output m
-   . HookM hooks input slots output m Unit
-  -> HookAction hooks input slots output m
-doThis = DoThis
-
 handleHookAction
-  :: forall hooks input slots output m rest
-   . { finalize :: HookM hooks input slots output m Unit
-     | rest
-     }
-  -> HookArg hooks input slots output m
+  :: forall hooks input slots output m
+   . HookArg hooks input slots output m
   -> HookAction hooks input slots output m
   -> H.HalogenM
-       { hooks :: (Hooks hooks)
-       , input :: input
-       , html :: HookHTML hooks input slots output m
-       }
+       (HookState hooks input slots output m)
        (HookAction hooks input slots output m)
        slots
        output
        m
        Unit
-handleHookAction { finalize } f = case _ of
-  Initialize -> render Nothing
-  DoThis m -> m *> render Nothing
-  Receive i -> render (Just i)
-  Finalize -> finalize
-  where
-  render = maybe H.get (H.modify <<< set (prop p_.input))
+handleHookAction f = flip applySecond H.get
     >=> unIx <<< f <<< _.input
     >=> H.modify_ <<< set (prop p_.html)
 
@@ -212,15 +197,15 @@ component options f =
     , render: _.html
     , eval:
         H.mkEval
-          { initialize: Just Initialize
-          , finalize: Just Finalize
-          , receive: if options.receiveInput then Just <<< Receive else const Nothing
-          , handleAction: handleHookAction options f
+          { initialize: Just mempty
+          , finalize: Just options.finalize
+          , receive: if options.receiveInput then Just <<< H.modify_ <<< set (prop p_.input) else const Nothing
+          , handleAction: handleHookAction f
           , handleQuery: options.handleQuery
           }
     }
 
-newtype IndexedHookM (hooks :: Row Type) (input :: Type) (slots :: Row Type) (output :: Type) (m :: Type -> Type) (i :: Row Type) (o :: Row Type) a
+newtype IndexedHookM hooks input slot output m (i :: Row Type) (o :: Row Type) a
   = IndexedHookM (HookM hooks input slots output m a)
 
 unIx :: forall hooks input slots output m i o a. IndexedHookM hooks input slots output m i o a -> HookM hooks input slots output m a
@@ -256,11 +241,8 @@ instance indexedHookMIxBind :: IxBind (IndexedHookM hooks input slots output m) 
 
 instance indexedHookMIxMonad :: IxMonad (IndexedHookM hooks input slots output m)
 
-data HookAction hooks input slots output m
-  = Initialize
-  | DoThis (HookM hooks input slots output m Unit)
-  | Receive input
-  | Finalize
+type HookAction hooks input slots output m
+  = HookM hooks input slots output m Unit
 
 lift
   :: forall hooks input slots output m v i

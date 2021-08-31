@@ -8,7 +8,7 @@ import Control.Bind.Indexed (ibind)
 import Data.Foldable (fold, for_)
 import Data.Symbol (class IsSymbol)
 import Halogen as H
-import Halogen.IHooks (class NotReadOnly, HookAction, HookHTML, HookM, IndexedHookM, Options, component, doThis, getHookCons, getHooksM, hookCons, lift, setHookMCons)
+import Halogen.IHooks (class NotReadOnly, HookAction, HookHTML, HookM, IndexedHookM, Options, component, getHookCons, getHooksM, hookCons, lift, setHookMCons)
 import Prim.Row as Row
 import Type.Proxy (Proxy(..))
 
@@ -97,7 +97,7 @@ setM
   => proxy sym
   -> HookM hooks input slots output m a
   -> HookAction hooks input slots output m
-setM px v = doThis $ bind v (setHookMCons px)
+setM px v = bind v (setHookMCons px)
 
 set
   :: forall proxy output input slots m sym a r1 hooks
@@ -117,7 +117,7 @@ modify_
   => proxy sym
   -> (a -> a)
   -> HookAction hooks input slots output m
-modify_ px f = doThis $ bind (map (getHookCons px) getHooksM) (flip for_ (setHookMCons px <<< f))
+modify_ px f = bind (map (getHookCons px) getHooksM) (flip for_ (setHookMCons px <<< f))
 
 withHook
   :: forall proxy hooks' hooks input slots output m sym v
