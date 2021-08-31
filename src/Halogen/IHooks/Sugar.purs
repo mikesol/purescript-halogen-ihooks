@@ -8,7 +8,7 @@ import Control.Bind.Indexed (ibind)
 import Data.Foldable (fold, for_)
 import Data.Symbol (class IsSymbol)
 import Halogen as H
-import Halogen.IHooks (class NotReadOnly, HookAction, HookHTML, HookM, IndexedHookM, Options, component, doThis, getHookCons, getHooksM, hookCons, lift, setHookMCons)
+import Halogen.IHooks (class NotReadOnly, HookAction, HookHTML, HookM, IndexedHookM, Options, component, doThis, getHookCons, getHooksM, hBind, hMap, hPure, hookCons, lift, setHookMCons)
 import Prim.Row as Row
 import Type.Proxy (Proxy(..))
 
@@ -48,20 +48,20 @@ withFinalize
    . Row.Lacks "_finalize" i
   => Row.Lacks "_finalize" hooks'
   => IndexedHookM ("_finalize" :: F hooks' input slots output m | hooks') input slots output m i ("_finalize" :: F hooks' input slots output m | i) Unit
-withFinalize = ivoid $ hookCons (Proxy :: _ "_finalize") (pure $ F $ pure unit)
+withFinalize = ivoid $ hookCons (Proxy :: _ "_finalize") (hPure $ F $ hPure unit)
 
 addToFinalize
   :: forall hooks' input slots output m
    . Row.Lacks "_finalize" hooks'
   => HookM ("_finalize" :: F hooks' input slots output m | hooks') input slots output m Unit
   -> HookM ("_finalize" :: F hooks' input slots output m | hooks') input slots output m Unit
-addToFinalize m = bind (map (getHookCons finalize) getHooksM) (setHookMCons finalize <<< F <<< applySecond m <<< fold <<< map unF)
+addToFinalize m = hBind (hMap (getHookCons finalize) getHooksM) (setHookMCons finalize <<< F <<< applySecond m <<< fold <<< map unF)
 
 runFinalize
   :: forall hooks' input slots output m
    . Row.Lacks "_finalize" hooks'
   => HookM ("_finalize" :: F hooks' input slots output m | hooks') input slots output m Unit
-runFinalize = bind (map (getHookCons finalize) getHooksM) (fold <<< map unF)
+runFinalize = hBind (hMap (getHookCons finalize) getHooksM) (fold <<< map unF)
 
 capture
   :: forall proxy hooks' hooks input slots output m sym v i o
@@ -75,19 +75,7 @@ capture
   -> v
   -> HookM hooks input slots output m Unit
   -> IndexedHookM hooks input slots output m i o Unit
-capture px v m = ibind (hookCons px (pure v)) (flip iwhen (lift (setHookMCons px v *> m)) <<< notEq v)
-
-hookConsPure
-  :: forall hooks' hooks input slots output proxy sym m v i o
-   . IsSymbol sym
-  => Row.Lacks sym i
-  => Row.Cons sym v i o
-  => Row.Lacks sym hooks'
-  => Row.Cons sym v hooks' hooks
-  => proxy sym
-  -> v
-  -> IndexedHookM hooks input slots output m i o v
-hookConsPure px = hookCons px <<< pure
+capture px v m = ibind (hookCons px (hPure v)) (flip iwhen (lift (setHookMCons px v *> m)) <<< notEq v)
 
 setM
   :: forall proxy output input slots m sym a r1 hooks
@@ -97,7 +85,7 @@ setM
   => proxy sym
   -> HookM hooks input slots output m a
   -> HookM hooks input slots output m Unit
-setM px v = bind v (setHookMCons px)
+setM px v = hBind v (setHookMCons px)
 
 set
   :: forall proxy output input slots m sym a r1 hooks
@@ -117,7 +105,7 @@ modify_
   => proxy sym
   -> (a -> a)
   -> HookM hooks input slots output m Unit
-modify_ px f = bind (map (getHookCons px) getHooksM) (flip for_ (setHookMCons px <<< f))
+modify_ px f = hBind (map (getHookCons px) getHooksM) (flip for_ (setHookMCons px <<< f))
 
 doSetM
   :: forall proxy output input slots m sym a r1 hooks
@@ -157,7 +145,7 @@ withHook
   => proxy sym
   -> (v -> HookM hooks input slots output m Unit)
   -> HookM hooks input slots output m Unit
-withHook px = bind (map (getHookCons px) getHooksM) <<< flip for_
+withHook px = hBind (hMap (getHookCons px) getHooksM) <<< flip for_
 
 -- | A component with a finalizer bolted on
 -- | The same as manually calling `withFinalizer` and `runFinalizer`

@@ -66,7 +66,7 @@ todo = Hooks.component
       }
   )
   \input -> Ix.do
-    description <- Sugar.hookConsPure _description input.todo.description
+    description <- Hooks.hookConsPure _description input.todo.description
 
     let
       handleCheckbox (Check bool) = Hooks.doThis do

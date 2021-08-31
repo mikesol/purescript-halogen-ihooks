@@ -1,6 +1,7 @@
 module Halogen.IHooks
   ( IndexedHookM
   , hookCons
+  , hookConsPure
   , component
   , getHooksM
   , lift
@@ -23,6 +24,11 @@ module Halogen.IHooks
   , class NotReadOnly
   , class NotReadOnlyRL
   , HookHTML
+  --- monomorphic
+  , hMap
+  , hPure
+  , hApply
+  , hBind
   ) where
 
 import Prelude
@@ -325,3 +331,12 @@ hookCons
   -> HookM hooks input slots output m v
   -> IndexedHookM hooks input slots output m i o v
 hookCons px m = IndexedHookM (hMap (curriedGetHookConsFFI $ reflectSymbol px) getHooksM `hBind` maybe (m `hBind` (fMap hApplySecond (hModify_ <<< Record.modify p_.hooks <<< (setHookConsFFI <<< reflectSymbol) px) `fApply` hPure)) hPure)
+
+hookConsPure
+  :: forall hooks' hooks input slots output proxy sym m v i o
+   . IsSymbol sym
+  => HookCons sym v i o hooks' hooks
+  => proxy sym
+  -> v
+  -> IndexedHookM hooks input slots output m i o v
+hookConsPure px m = IndexedHookM (hMap (curriedGetHookConsFFI $ reflectSymbol px) getHooksM `hBind` maybe ((hPure m) `hBind` (fMap hApplySecond (hModify_ <<< Record.modify p_.hooks <<< (setHookConsFFI <<< reflectSymbol) px) `fApply` hPure)) hPure)
