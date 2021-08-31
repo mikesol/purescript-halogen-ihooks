@@ -28,14 +28,11 @@ module Halogen.IHooks
 import Prelude
 
 import Control.Applicative.Indexed (class IxApplicative, iapply, ipure)
-import Control.Apply (applySecond)
 import Control.Apply.Indexed (class IxApply)
 import Control.Bind.Indexed (class IxBind, ibind)
 import Control.Monad.Indexed (class IxMonad, iap)
 import Data.Foldable (for_)
 import Data.Functor.Indexed (class IxFunctor)
-import Data.Lens (over, set)
-import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Data.Symbol (class IsSymbol, reflectSymbol)
@@ -45,6 +42,7 @@ import Halogen.HTML.Core as HC
 import Prim.Row (class Cons, class Lacks, class Union)
 import Prim.RowList as RL
 import Prim.TypeError (class Fail, Text)
+import Record as Record
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -66,8 +64,17 @@ type HookM hooks input slots output m a
 fMap :: forall r a b. (a -> b) -> (r -> a) -> (r -> b)
 fMap = map
 
+fApply :: forall r a b. (r -> a -> b) -> (r -> a) -> (r -> b)
+fApply = (<*>)
+
+hApplySecond :: forall hooks input slots output m a b. HookM hooks input slots output m a -> HookM hooks input slots output m b -> HookM hooks input slots output m b
+hApplySecond a b = hMap (const identity) a `hApply` b
+
 hMap :: forall hooks input slots output m a b. (a -> b) -> HookM hooks input slots output m a -> HookM hooks input slots output m b
 hMap = map
+
+hApply :: forall hooks input slots output m a b. HookM hooks input slots output m (a -> b) -> HookM hooks input slots output m a -> HookM hooks input slots output m b
+hApply = (<*>)
 
 hBind :: forall hooks input slots output m a b. HookM hooks input slots output m a -> (a -> HookM hooks input slots output m b) -> HookM hooks input slots output m b
 hBind = (>>=)
@@ -142,7 +149,7 @@ setHookMCons
   => proxy sym
   -> a
   -> HookM hooks input slots output m Unit
-setHookMCons px = hModify_ <<< over (prop p_.hooks) <<< setHookCons px
+setHookMCons px = hModify_ <<< Record.modify p_.hooks <<< setHookCons px
 
 class NotReadOnlyRL (rl :: RL.RowList Type)
 
@@ -157,7 +164,7 @@ setHookMUnion
   => Union r1 r2 hooks
   => { | r1 }
   -> HookM hooks input slots output m Unit
-setHookMUnion = hModify_ <<< over (prop p_.hooks) <<< setHookUnion
+setHookMUnion = hModify_ <<< Record.modify p_.hooks <<< setHookUnion
 
 asHooks :: forall r. { | r } -> Hooks r
 asHooks = unsafeCoerce
@@ -211,9 +218,9 @@ handleHookAction { finalize } f = case _ of
   Receive i -> (i <<< _.input) <$> hGet >>= flip for_ (render <<< Just)
   Finalize -> finalize
   where
-  render = maybe hGet (hModify <<< set (prop p_.input))
+  render = maybe hGet (hModify <<< Record.set p_.input)
     >==> unIx <<< f <<< _.input
-    >==> hModify_ <<< set (prop p_.html)
+    >==> hModify_ <<< Record.set p_.html
 
 type Options query hooks input slots output m
   =
@@ -317,4 +324,4 @@ hookCons
   => proxy sym
   -> HookM hooks input slots output m v
   -> IndexedHookM hooks input slots output m i o v
-hookCons px m = IndexedHookM (hMap (curriedGetHookConsFFI $ reflectSymbol px) getHooksM `hBind` maybe (m `hBind` (fMap applySecond (hModify_ <<< over (prop p_.hooks) <<< (setHookConsFFI <<< reflectSymbol) px) <*> hPure)) hPure)
+hookCons px m = IndexedHookM (hMap (curriedGetHookConsFFI $ reflectSymbol px) getHooksM `hBind` maybe (m `hBind` (fMap hApplySecond (hModify_ <<< Record.modify p_.hooks <<< (setHookConsFFI <<< reflectSymbol) px) `fApply` hPure)) hPure)
