@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "node node_modules/puppeteer/install.js",
+    "clean": "rm -rf .spago output node_modules *.lock",
+    "build": "spago build",
+    "snapshot": "npm run bundle:performance && spago -x test/test.dhall run --main Performance.Snapshot.Write",
+    "test:performance": "npm run bundle:performance && spago -x test/test.dhall run --main Performance.Main",
+    "bundle:performance": "spago -x test/test.dhall bundle-app --main Performance.Test.App --to test/test.js --no-build",
+    "build:performance": "spago -x test/test.dhall build"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +18,10 @@
   "devDependencies": {
     "purescript": "^0.14.4",
     "purs-tidy": "^0.4.6",
-    "spago": "^0.20.3"
+    "spago": "^0.20.3",
+    "filter-console": "^0.1.1",
+    "headless-devtools": "^2.0.1",
+    "puppeteer": "^5.2.0",
+    "tracealyzer": "^0.10.3"
   }
 }
