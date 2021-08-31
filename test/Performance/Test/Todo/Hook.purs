@@ -64,7 +64,7 @@ container = Hooks.component Hooks.defaultOptions \_ -> Ix.do
 todo :: forall q m. MonadAff m => H.Component q TodoInput TodoOutput m
 todo = Hooks.component
   ( Hooks.defaultOptions
-      { receiveInput = \prev cur ->
+      { receiveInput = \cur prev ->
           if prev.todo.id == cur.todo.id && prev.completed == cur.completed then Nothing
           else Just cur
       }
