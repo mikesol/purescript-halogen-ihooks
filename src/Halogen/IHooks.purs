@@ -31,6 +31,7 @@ import Control.Apply (applySecond)
 import Control.Apply.Indexed (class IxApply)
 import Control.Bind.Indexed (class IxBind, ibind)
 import Control.Monad.Indexed (class IxMonad, iap)
+import Data.Foldable (for_)
 import Data.Functor.Indexed (class IxFunctor)
 import Data.Lens (over, set)
 import Data.Lens.Record (prop)
@@ -177,7 +178,7 @@ handleHookAction
 handleHookAction { finalize } f = case _ of
   DoThis m -> m *> render Nothing
   Initialize -> render Nothing
-  Receive i -> render (Just i)
+  Receive i -> i <$> H.gets _.input >>= flip for_ (render <<< Just)
   Finalize -> finalize
   where
   render = maybe H.get (H.modify <<< set (prop p_.input))
@@ -186,7 +187,7 @@ handleHookAction { finalize } f = case _ of
 
 type Options query hooks input slots output m
   =
-  { receiveInput :: Boolean
+  { receiveInput :: input -> input -> Maybe input
   , handleQuery :: forall a. query a -> HookM hooks input slots output m (Maybe a)
   , finalize :: HookM hooks input slots output m Unit
   , initialHTML :: HookHTML hooks input slots output m
@@ -196,7 +197,7 @@ defaultOptions
   :: forall query hooks input slots output m
    . Options query hooks input slots output m
 defaultOptions =
-  { receiveInput: false
+  { receiveInput: const Just
   , handleQuery: const (pure Nothing)
   , finalize: pure unit
   , initialHTML: HH.div [] []
@@ -215,7 +216,7 @@ component options f =
         H.mkEval
           { initialize: Just Initialize
           , finalize: Just Finalize
-          , receive: if options.receiveInput then Just <<< Receive else const Nothing
+          , receive: Just <<< Receive <<< options.receiveInput
           , handleAction: handleHookAction options f
           , handleQuery: options.handleQuery
           }
@@ -260,7 +261,7 @@ instance indexedHookMIxMonad :: IxMonad (IndexedHookM hooks input slots output m
 data HookAction hooks input slots output m
   = Initialize
   | DoThis (HookM hooks input slots output m Unit)
-  | Receive input
+  | Receive (input -> Maybe input)
   | Finalize
 
 lift
