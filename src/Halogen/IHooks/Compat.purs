@@ -407,7 +407,7 @@ modify_
   => proxy sym
   -> (a -> a)
   -> Hooks.HookAction hooks input slots output m
-modify_ = Sugar.modify_
+modify_ = Sugar.doModify_
 
 capture
   :: forall iRL sym' hooks' hooks input slots output m sym v i o

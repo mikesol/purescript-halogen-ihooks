@@ -96,8 +96,8 @@ setM
   => IsSymbol sym
   => proxy sym
   -> HookM hooks input slots output m a
-  -> HookAction hooks input slots output m
-setM px v = doThis $ bind v (setHookMCons px)
+  -> HookM hooks input slots output m Unit
+setM px v = bind v (setHookMCons px)
 
 set
   :: forall proxy output input slots m sym a r1 hooks
@@ -106,7 +106,7 @@ set
   => IsSymbol sym
   => proxy sym
   -> a
-  -> HookAction hooks input slots output m
+  -> HookM hooks input slots output m Unit
 set px = setM px <<< pure
 
 modify_
@@ -116,8 +116,38 @@ modify_
   => IsSymbol sym
   => proxy sym
   -> (a -> a)
+  -> HookM hooks input slots output m Unit
+modify_ px f = bind (map (getHookCons px) getHooksM) (flip for_ (setHookMCons px <<< f))
+
+doSetM
+  :: forall proxy output input slots m sym a r1 hooks
+   . NotReadOnly a
+  => Row.Cons sym a r1 hooks
+  => IsSymbol sym
+  => proxy sym
+  -> HookM hooks input slots output m a
   -> HookAction hooks input slots output m
-modify_ px f = doThis $ bind (map (getHookCons px) getHooksM) (flip for_ (setHookMCons px <<< f))
+doSetM px v = doThis $ setM px v
+
+doSet
+  :: forall proxy output input slots m sym a r1 hooks
+   . NotReadOnly a
+  => Row.Cons sym a r1 hooks
+  => IsSymbol sym
+  => proxy sym
+  -> a
+  -> HookAction hooks input slots output m
+doSet px v = doThis $ set px v
+
+doModify_
+  :: forall proxy output input slots m sym a r1 hooks
+   . NotReadOnly a
+  => Row.Cons sym a r1 hooks
+  => IsSymbol sym
+  => proxy sym
+  -> (a -> a)
+  -> HookAction hooks input slots output m
+doModify_ px v = doThis $ modify_ px v
 
 withHook
   :: forall proxy hooks' hooks input slots output m sym v

@@ -52,7 +52,7 @@ component =
       Sugar.addToFinalize <<< H.liftEffect =<<
         ( H.liftEffect
             $ subscribe (interval 1000)
-              (const $ HS.notify listener (Sugar.modify_ (Proxy :: _ "foo") (add 1)))
+              (const $ HS.notify listener (Sugar.doModify_ (Proxy :: _ "foo") (add 1)))
         )
     -- html
     ipure
@@ -67,11 +67,11 @@ component =
                           [ HH.text ("Foo is: " <> show foo <> " Bar is: " <> show bar) ]
                       -- effectful setter
                       , HH.button
-                          [ classes [ "text-2xl", "m-5", "bg-indigo-500", "p-3", "rounded-lg", "text-white", "hover:bg-indigo-400" ], HE.onClick \_ -> Sugar.setM (Proxy :: _ "foo") (lift $ affAdd1 foo) ]
+                          [ classes [ "text-2xl", "m-5", "bg-indigo-500", "p-3", "rounded-lg", "text-white", "hover:bg-indigo-400" ], HE.onClick \_ -> Sugar.doSetM (Proxy :: _ "foo") (lift $ affAdd1 foo) ]
                           [ HH.text "Increment foo" ]
                       -- pure modifier
                       , HH.button
-                          [ classes [ "text-2xl", "m-5", "bg-pink-500", "p-3", "rounded-lg", "text-white", "hover:bg-pink-400" ], HE.onClick \_ -> Sugar.modify_ (Proxy :: _ "bar") (add 1) ]
+                          [ classes [ "text-2xl", "m-5", "bg-pink-500", "p-3", "rounded-lg", "text-white", "hover:bg-pink-400" ], HE.onClick \_ -> Sugar.doModify_ (Proxy :: _ "bar") (add 1) ]
                           [ HH.text "Increment bar" ]
                       ]
                   , HH.div [ classes [ "flex-grow" ] ] []

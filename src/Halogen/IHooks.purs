@@ -5,6 +5,7 @@ module Halogen.IHooks
   , getHooksM
   , lift
   , HookAction
+  , HookState
   , HookM
   , HookArg
   , doThis
@@ -45,12 +46,15 @@ import Prim.TypeError (class Fail, Text)
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
-type HookM hooks input slots output m a
-  = H.HalogenM
-  { hooks :: (Hooks hooks)
+type HookState hooks input slots output m =
+  { hooks :: Hooks hooks
   , input :: input
   , html :: HookHTML hooks input slots output m
   }
+
+type HookM hooks input slots output m a
+  = H.HalogenM
+  (HookState hooks input slots output m)
   (HookAction hooks input slots output m)
   slots
   output
@@ -164,18 +168,15 @@ handleHookAction
   -> HookArg hooks input slots output m
   -> HookAction hooks input slots output m
   -> H.HalogenM
-       { hooks :: (Hooks hooks)
-       , input :: input
-       , html :: HookHTML hooks input slots output m
-       }
+       (HookState hooks input slots output m)
        (HookAction hooks input slots output m)
        slots
        output
        m
        Unit
 handleHookAction { finalize } f = case _ of
-  Initialize -> render Nothing
   DoThis m -> m *> render Nothing
+  Initialize -> render Nothing
   Receive i -> render (Just i)
   Finalize -> finalize
   where
