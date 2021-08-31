@@ -9,6 +9,7 @@ in      conf
               , "node-fs"
               , "spec"
               , "random"
+              , "debug"
               , "aff"
               , "arrays"
               , "avar"

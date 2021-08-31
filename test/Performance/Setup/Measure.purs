@@ -124,8 +124,8 @@ measure browser test = do
 
   -- Stop recording the trace and write it to disk
   trace <- Puppeteer.stopTrace page
-  Puppeteer.closePage page
   killFiber (error "time's up!") heapFiber
+  Puppeteer.closePage page
 
   -- Use the trace to get the average FPS during the execution
   mbModel <- Puppeteer.getPerformanceModel trace

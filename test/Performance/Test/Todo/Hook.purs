@@ -25,7 +25,7 @@ _description = Proxy :: Proxy "description"
 
 container :: forall q i o m. MonadAff m => H.Component q i o m
 container = Hooks.component Hooks.defaultOptions \_ -> Ix.do
-  state <- Sugar.hookConsPure _containerState Shared.initialContainerState
+  state <- Hooks.hookCons _containerState (liftEffect $ Shared.fillContainerState Shared.initialContainerState)
 
   let
     handleTodo = Hooks.doThis <<< case _ of
@@ -38,10 +38,6 @@ container = Hooks.component Hooks.defaultOptions \_ -> Ix.do
           Sugar.modify_ _containerState _ { completed = Set.insert id state.completed }
         else
           Sugar.modify_ _containerState _ { completed = Set.delete id state.completed }
-
-  Hooks.hookCons (Proxy :: _ "fillContainerState") do
-    filled <- liftEffect $ Shared.fillContainerState state
-    Hooks.setHookMCons _containerState filled
 
   ipure do
     let

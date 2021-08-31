@@ -9,3 +9,4 @@
 /.psa*
 /.spago
 /test-results
+/test/test.js

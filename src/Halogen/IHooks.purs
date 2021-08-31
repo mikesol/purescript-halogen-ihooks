@@ -197,7 +197,7 @@ defaultOptions
   :: forall query hooks input slots output m
    . Options query hooks input slots output m
 defaultOptions =
-  { receiveInput: const $ const Nothing
+  { receiveInput: const Just
   , handleQuery: const (pure Nothing)
   , finalize: pure unit
   , initialHTML: HH.div [] []
