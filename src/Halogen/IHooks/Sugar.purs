@@ -5,10 +5,11 @@ import Prelude
 import Control.Applicative.Indexed (iapplySecond, ivoid, iwhen)
 import Control.Apply (applySecond)
 import Control.Bind.Indexed (ibind)
+import Control.Plus (empty)
 import Data.Foldable (fold, for_)
 import Data.Symbol (class IsSymbol)
 import Halogen as H
-import Halogen.IHooks (class NotReadOnly, HookAction, HookHTML, HookM, IndexedHookM, Options, component, doThis, getHookCons, getHooksM, hookCons, lift, setHookMCons)
+import Halogen.IHooks (class NotReadOnly, HookAction, HookHTML, HookM, IndexedHookM, Options, HookArg, component, doThis, getHookCons, getHooksM, hookCons, lift, setHookMCons)
 import Prim.Row as Row
 import Type.Proxy (Proxy(..))
 
@@ -170,3 +171,10 @@ componentF
      )
   -> H.Component query input output m
 componentF options f = component (options { finalize = options.finalize *> runFinalize }) (iapplySecond (withFinalize) <<< f)
+
+withConstInput
+  :: forall slots hooks query input output m
+   . Options query hooks input slots output m
+  -> HookArg hooks input slots output m
+  -> H.Component query input output m
+withConstInput options = component (options { receiveInput = const $ const empty })

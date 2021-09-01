@@ -8,7 +8,7 @@
     "clean": "rm -rf .spago output node_modules *.lock",
     "build": "spago build",
     "snapshot": "npm run bundle:performance && spago -x test/test.dhall run --main Performance.Snapshot.Write",
-    "test:performance": "npm run bundle:performance && spago -x test/test.dhall run --main Performance.Main",
+    "test:performance": "spago -x test/test.dhall run --main Performance.Main",
     "bundle:performance": "spago -x test/test.dhall bundle-app --main Performance.Test.App --to test/test.js --no-build",
     "build:performance": "spago -x test/test.dhall build"
   },

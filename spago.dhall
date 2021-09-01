@@ -12,7 +12,8 @@ to generate this file without the comments in this block.
 -}
 { name = "halogen-ihooks"
 , dependencies =
-  [ "effect"
+  [ "control"
+  , "effect"
   , "foldable-traversable"
   , "halogen"
   , "indexed-monad"

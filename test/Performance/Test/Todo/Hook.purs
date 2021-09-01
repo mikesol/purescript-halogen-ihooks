@@ -24,7 +24,7 @@ _containerState = Proxy :: Proxy "containerState"
 _description = Proxy :: Proxy "description"
 
 container :: forall q i o m. MonadAff m => H.Component q i o m
-container = Hooks.component Hooks.defaultOptions \_ -> Ix.do
+container = Sugar.withConstInput Hooks.defaultOptions \_ -> Ix.do
   state <- Hooks.hookCons _containerState (liftEffect $ Shared.fillContainerState Shared.initialContainerState)
 
   let
@@ -89,7 +89,7 @@ todo = Hooks.component
         ]
 
 checkbox :: forall q m. MonadAff m => H.Component q CheckboxInput CheckboxOutput m
-checkbox = Hooks.component Hooks.defaultOptions \input -> ipure $ HH.input
+checkbox = Sugar.withConstInput Hooks.defaultOptions \input -> ipure $ HH.input
   [ HP.id (Shared.checkId input.id)
   , HP.checked $ Set.member input.id input.completed
   , HP.type_ HP.InputCheckbox

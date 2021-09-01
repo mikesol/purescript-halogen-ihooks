@@ -14,10 +14,10 @@ import Effect.Aff.AVar as AVar
 import Effect.Class (liftEffect)
 import Node.Path (resolve)
 import Partial.Unsafe (unsafePartial)
-import Performance.Test.Types (Test(..), completedSuffix, startSuffix, testToString)
-import Performance.Test.Todo.Shared (addNewId, checkId, editId, saveId)
 import Performance.Setup.Puppeteer (Browser, FilePath(..), Kilobytes(..), Milliseconds(..), Page)
 import Performance.Setup.Puppeteer as Puppeteer
+import Performance.Test.Todo.Shared (addNewId, checkId, editId, saveId)
+import Performance.Test.Types (Test(..), completedSuffix, startSuffix, testToString)
 
 type PerformanceSummary =
   { averageFPS :: Int
